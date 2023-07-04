@@ -33,9 +33,9 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(self.code_view)
         content_layout.addWidget(browser_widget)
         content_layout.addWidget(self.html_view)
-        content_layout.setSizes([2, 6, 2])
         sizes = content_layout.sizes()
         total_size = sum(sizes)
+        content_layout.setSizes([2, 6, 2])
         # Minimos
         #content_layout.widget(0).setMinimumWidth(int(total_size * 0.15))
         #content_layout.widget(1).setMinimumWidth(int(total_size * 0.70))

@@ -26,17 +26,17 @@ class BrowserNavegacion(QWidget):
 
         # Crea un botón de retroceso
         self.back_button = QPushButton(self)
-        self.back_button.setIcon(QIcon("../img/icon/back.png"))
+        self.back_button.setIcon(QIcon("../../img/icon/back.png"))
         self.back_button.clicked.connect(self.browser_view.web_view.back)
 
         # Crea un botón de avance
         self.forward_button = QPushButton(self)
-        self.forward_button.setIcon(QIcon("../img/icon/forward.png"))  
+        self.forward_button.setIcon(QIcon("../../img/icon/forward.png"))  
         self.forward_button.clicked.connect(self.browser_view.web_view.forward)
 
         # Crea un botón de recarga
         self.reload_button = QPushButton(self)
-        self.reload_button.setIcon(QIcon("../img/icon/refresh.png"))
+        self.reload_button.setIcon(QIcon("../../img/icon/refresh.png"))
         self.reload_button.clicked.connect(self.browser_view.web_view.reload)
 
 
@@ -189,9 +189,9 @@ class BrowserView(QWidget):
     def show_context_menu(self, position):
         menu = QMenu()
         # Configuracion de Page
-        back_page_action = menu.addAction(QIcon("../img/icon/back.png"), "Back Page")
-        forward_page_action = menu.addAction(QIcon("../img/icon/forward.png"), "Forward Page")
-        reload_page_action = menu.addAction(QIcon("../img/icon/refresh.png"), "Reload page")
+        back_page_action = menu.addAction(QIcon("../../img/icon/back.png"), "Back Page")
+        forward_page_action = menu.addAction(QIcon("../../img/icon/forward.png"), "Forward Page")
+        reload_page_action = menu.addAction(QIcon("../../img/icon/refresh.png"), "Reload page")
         # Agrega separador
         separator_action = menu.addSeparator()
         # View Code 
