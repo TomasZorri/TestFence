@@ -4,10 +4,10 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
 # Import partes
-from htmlview import MainHtmlView
-from browserview import BrowserView ,BrowserNavegacion
-from navview import NavMenu
-from codeview import CodeEditor
+from layout.htmlview import MainHtmlView
+from layout.browserview import BrowserView ,BrowserNavegacion
+from layout.navview import NavMenu
+from layout.codeview import CodeEditor
 
 
 class MainWindow(QMainWindow):

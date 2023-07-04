@@ -1,7 +1,5 @@
 # TestFence
 
-![TestFence Logo](img/main.png)
-
 TestFence es una aplicación de testing de sitio web diseñada para evaluar la seguridad y la calidad del código de una aplicación web. Proporciona una plataforma versátil y fácil de usar que permite realizar pruebas exhaustivas y automatizadas.
 
 
@@ -18,6 +16,7 @@ TestFence es una aplicación de testing de sitio web diseñada para evaluar la s
 - Pruebas automatizadas para identificar posibles brechas y vulnerabilidades en las funcionalidades del sitio.
 
 
+
 ## Instalación y Uso
 
 ### Instalación
@@ -32,7 +31,8 @@ python main.py
 
 ### Uso 
 
-1. Dentro de la interfaz, agrega algunas de estas funciones en la sección de código:
+1. Estas son algunas funciones para el testeo:
+
 
 ```python
 # Establecer una nueva URL
@@ -48,15 +48,16 @@ click_element('TAG', 'Atribute', 'contentAtribute', time_wait=True, tag_navigati
 wait_page()
 ```
 
-* El parámetro "time_wait=True" en el "click_element()" y "set_url()" es para esperar a que la página termine de cargar antes de realizar la acción, es similar a la función "wait_page()".
+* El parámetro "time_wait=True" en "click_element()" y "set_url()" es para esperar a que la página termine de cargar antes de realizar la acción, es similar a la función "wait_page()".
 * El parámetro "tag_navigation=True" indica que primero se buscará el elemento, se centrará en la pantalla, se resaltará y luego se realizará la acción especificada. Solo en las funciones de "set_content()" y "click_element()".
-
-2. Una vez configurado ejecutar el codigo con "CTRL + B".
 
 
 ### Ejemplo de Uso
 
-1. Agrega este código en la sección de código:
+1. Agrega este código en esta sección:
+
+![Code Section](img/info/section-code.jpg)
+
 
 ```python
 # Configuración de URL
@@ -81,7 +82,7 @@ set_url('https://www.google.com')
 wait_page()
 ```
 
-2. Estando en la seccion de código ejecútalo con "CTRL + B".
+2. Una vez agregado dicho código en la misma sección ejecútalo con "CTRL + B".
 
 
 

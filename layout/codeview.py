@@ -67,6 +67,17 @@ class CodeEditor(QWidget):
         layout.addWidget(self.tab_widget)
         self.setLayout(layout)
 
+        # error and run widget handlers
+        self.actions_text_edit = QTextEdit()
+        self.actions_text_edit.hide()
+        self.actions_text_edit.setReadOnly(True)
+        self.error_text_widget = QTextEdit()
+        self.error_text_widget.hide()
+        self.error_text_widget.setReadOnly(True)
+
+         # Otras inicializaciones
+        self.last_opened_folder = QDir.homePath()
+
 
 
 
@@ -225,9 +236,6 @@ class CodeEditor(QWidget):
             return
         elif code and self.unsaved_changes:
             self.save_file()
-            print('con guardado!!!', code)
-        else:
-            print('final!!!', code)
         
 
         # Definir funciones y módulos permitidos
@@ -240,25 +248,34 @@ class CodeEditor(QWidget):
         }
 
         try:
-            # Agregar al widget y ajustar su tamaño
-            if current_widget.widget(1) is None:
-                self.actions_text_edit = QTextEdit()
-                self.actions_text_edit.setReadOnly(True)
+            # Agregar el widget de ejecusion
+            if self.actions_text_edit.isVisible() != True:
+                self.error_text_widget.hide()
+                self.actions_text_edit.show()
                 current_widget.addWidget(self.actions_text_edit)
-            elif self.actions_text_edit:
-                self.actions_text_edit.setPlainText("")
+                self.error_text_widget.setPlainText("")
 
-            sizes = current_widget.sizes()
-            total_size = sum(sizes)
-            code_editor_size = int(total_size * 0.9)
-            actions_text_edit_size = total_size - code_editor_size
-            sizes[0] = code_editor_size
-            sizes[1] = actions_text_edit_size
-            current_widget.setSizes(sizes)
-            current_widget.widget(0).setMinimumHeight(int(total_size * 0.70))
-            current_widget.widget(0).setMaximumHeight(code_editor_size)
-            current_widget.widget(1).setMinimumHeight(actions_text_edit_size)
-            current_widget.widget(1).setMaximumHeight(int(total_size * 0.30))
+
+                # Ajustar Tamaño
+                sizes = current_widget.sizes()
+                total_size = sum(sizes)
+                code_editor_size = int(total_size * 0.9)
+                actions_text_edit_size = total_size - code_editor_size
+                sizes[0] = code_editor_size
+                sizes[1] = actions_text_edit_size
+                current_widget.setSizes(sizes)
+                current_widget.widget(0).setMinimumHeight(int(total_size * 0.70))
+                current_widget.widget(0).setMaximumHeight(code_editor_size)
+                current_widget.widget(1).setMinimumHeight(actions_text_edit_size)
+                current_widget.widget(1).setMaximumHeight(int(total_size * 0.30))
+
+
+
+            """if current_widget.count() == 1:
+                sizes = sum(current_widget.sizes())
+                current_widget.widget(0).setMinimumHeight(sizes)"""
+
+            
 
             # Compilar el código restringido
             code_restricted = compile_restricted(code, '<string>', 'exec')
@@ -286,18 +303,18 @@ class CodeEditor(QWidget):
                     error_message = f"{error_info}."
 
             # Verificar si el widget de texto de error ya existe para la pestaña actual
-            if current_index in self.error_text_edit:
+            if current_index in self.error_text_edit and self.error_text_widget.isVisible() == True:
                 error_text_edit = self.error_text_edit[current_index]
-                error_text_edit.setPlainText(error_message)
-            else:
-                # Crear un nuevo widget de texto de error y agregarlo al layout de la pestaña actual
-                error_text_edit = QTextEdit()
-                error_text_edit.setPlainText(error_message)
+                error_text_edit.setPlainText(error_message)     
+            elif self.error_text_widget.isVisible() != True:
+                ## Widget de texto de error y agregarlo al layout de la pestaña actual
+                self.actions_text_edit.hide()
+                self.error_text_widget.show()
+                current_widget.addWidget(self.error_text_widget)
+                self.error_text_widget.setPlainText(error_message)
 
-                # Agregar al widget y ajustar su tamaño
-                current_widget.addWidget(error_text_edit)
+                ## Calcular su tamaño
                 sizes = current_widget.sizes()
-                # Calcular los nuevos tamaños proporcionales
                 total_size = sum(sizes)
                 code_editor_size = int(total_size * 0.9)
                 error_text_edit_size = total_size - code_editor_size
@@ -305,7 +322,6 @@ class CodeEditor(QWidget):
                 sizes[0] = code_editor_size
                 sizes[1] = error_text_edit_size
                 current_widget.setSizes(sizes)
-
                 # Establecer los mínimos y máximos de tamaño para los widgets
                 current_widget.widget(0).setMinimumHeight(int(total_size * 0.70))
                 current_widget.widget(0).setMaximumHeight(code_editor_size)
@@ -313,8 +329,7 @@ class CodeEditor(QWidget):
                 current_widget.widget(1).setMaximumHeight(int(total_size * 0.30))
                 
 
-                self.error_text_edit[current_index] = error_text_edit
-                #error_text_edit.show()
+                self.error_text_edit[current_index] = self.error_text_widget
 
             self.tab_widget.setCurrentIndex(current_index)
             
@@ -459,12 +474,15 @@ class CodeEditor(QWidget):
         file_dialog.setNameFilter("Archivos Python (*.py)")
         file_dialog.setFileMode(QFileDialog.ExistingFile)
         file_dialog.setDirectory(QDir.homePath())
+        file_dialog.setDirectory(self.last_opened_folder)
+
         if file_dialog.exec():
             selected_files = file_dialog.selectedFiles()
             for file in selected_files:
                 self.open_file(file)
 
     def open_file(self, file_path):
+        self.last_opened_folder = QFileInfo(file_path).absoluteDir().absolutePath()
         # Verificar si el archivo ya está abierto en una pestaña
         for index in range(self.tab_widget.count()):
             tab_widget_item = self.tab_widget.widget(index)
