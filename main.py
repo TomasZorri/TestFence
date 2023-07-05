@@ -1,22 +1,38 @@
+# For ui
 import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QSplitter)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
-# Import partes
+# Import layout
 from layout.htmlview import MainHtmlView
 from layout.browserview import BrowserView ,BrowserNavegacion
 from layout.navview import NavMenu
 from layout.codeview import CodeEditor
 
+# Import data
+from model import *
+
+
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
-        
+
+        # Importar logic
+        self.init_database()
+        self.init_ui()
+
+    def init_database(self):
+        engine = create_engine('sqlite:///database.db')
+        Base.metadata.create_all(bind=engine)
+        self.session = Session(bind=engine)
+
+    def init_ui(self):
         self.html_view = MainHtmlView()
         self.browser_view = BrowserView(self.html_view)
-        self.code_view = CodeEditor(self.browser_view)
+        self.code_view = CodeEditor(self.browser_view, self.session)
         self.brower_nav = BrowserNavegacion(self.browser_view, parent=self)
         self.navmenu_view = NavMenu(self.browser_view, self.code_view, self.close_application)
 

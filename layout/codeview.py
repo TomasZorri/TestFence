@@ -1,3 +1,4 @@
+## For Ui
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QTabWidget, QPushButton,
     QFileDialog, QTabBar, QLineEdit, QTextEdit, QMessageBox, QSplitter,QCompleter)
 from PyQt5.QtCore import Qt, QEvent, QDir, QFileInfo, QCoreApplication, pyqtSignal, QEventLoop, QObject
@@ -11,6 +12,13 @@ import re
 # Seguridad
 from RestrictedPython  import compile_restricted
 from RestrictedPython.Guards import safe_builtins
+
+## database
+from datetime import date
+import sys
+sys.path.append('..')
+from model import ErrorEntry
+
 
 
 
@@ -29,8 +37,11 @@ def waitForSignal(signal):
 
 
 class CodeEditor(QWidget):
-    def __init__(self, browser_view,  parent=None):
+    def __init__(self, browser_view, session,  parent=None):
         super(CodeEditor, self).__init__(parent)
+
+        ## Intance of database
+        self.session = session
 
         # instancias
         self.browser_url = browser_view
@@ -99,11 +110,11 @@ class CodeEditor(QWidget):
             # Esperar a que se complete la carga de la página antes de continuar con el código
             waitForSignal(self.browser_loaded.loadFinished)
 
-        # navegar hacia la posicion del tag
-        if tag_navigation:
-            script = f"""
-                var element = document.querySelector('{tag}[{option}="{content_option}"]');
-                if (element) {{
+        script = f"""
+            var element = document.querySelector('{tag}[{option}="{content_option}"]');
+            if (element) {{
+                // navigate to element
+                if ({str(tag_navigation).lower()} === 'true') {{
                     // Obtener la posición del elemento
                     var rect = element.getBoundingClientRect();
                     var elementLeft = rect.left + rect.width / 2 - window.innerWidth / 2;
@@ -112,21 +123,48 @@ class CodeEditor(QWidget):
                     // Desplazarse a la posición del elemento
                     window.scrollTo({{ left: elementLeft, top: elementTop, behavior: 'smooth' }});
                 }}
-            """
-            self.browser_loaded.page().runJavaScript(script)
 
-        script = f"""
-            var element = document.querySelector('{tag}[{option}="{content_option}"]');
-            element.style.border = '3px solid red';
-            element.click();
+                // Logic click element
+                element.style.border = '3px solid red';
+                element.click();
+                if ((element.getAttribute('data-clicked') === 'true' || (element.getAttribute('href') && element.getAttribute('href') !== '') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'button') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'submit') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'checkbox') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'radio') || (element.tagName === 'SELECT') || (element.tagName === 'LABEL'))) {{
+                    element = 'positive';
+                }} else {{
+                    element = 'no_functionality';
+                }}
+            }} else {{
+                element = null;
+            }}
         """
-        # Add content es true
-        if self.actions_text_edit:
-            self.actions_text_edit.append('Has hecho un click!')
-            self.actions_text_edit.append('')
+
+        # Obtener resultado
+        def handle_result(result):
+            if result is not None:
+                if result == 'no_functionality':
+                    # El elemento existe pero no se hizo clic correctamente
+                    self.insert_error_entry('activo', 'Error de prueba', 'Pasos para reproducir el error',
+                                'Mensaje de error', 'Resultados esperados', 'Resultados obtenidos',
+                                '2023-07-04')
+
+                    if self.actions_text_edit:
+                        self.actions_text_edit.append('Error: No se pudo hacer clic en el elemento')
+                        self.actions_text_edit.append('')
+                elif result == 'positive' and self.actions_text_edit:
+                    self.actions_text_edit.append('Has hecho un click!: ')
+                    self.actions_text_edit.append('')
+            else:
+                # El elemento existe pero no se hizo clic correctamente
+                self.insert_error_entry('activo', 'Error de prueba', 'Pasos para reproducir el error',
+                                'Mensaje de error', 'Resultados esperados', 'Resultados obtenidos',
+                                '2023-07-04')
+                
+                # add to display
+                if self.actions_text_edit:
+                    self.actions_text_edit.append('Error: No se encontró el elemento')
+                    self.actions_text_edit.append('')
 
         # Ejecutar script
-        self.browser_loaded.page().runJavaScript(script)
+        self.browser_loaded.page().runJavaScript(script, handle_result)
 
         # opcional si desea esperar
         if time_wait:
@@ -136,17 +174,19 @@ class CodeEditor(QWidget):
             self.page_load = False
 
 
+
+
     # Agregar contenido
     def set_content(self, tag, option, content_option, value, tag_navigation=False):
         if not self.page_load:
             # Esperar a que se complete la carga de la página antes de continuar con el código
             waitForSignal(self.browser_loaded.loadFinished)
 
-        # navegar hacia la posicion del tag
-        if tag_navigation:
-            script = f"""
-                var element = document.querySelector('{tag}[{option}="{content_option}"]');
-                if (element) {{
+        # realizar la accion
+        script = f"""
+            var element = document.querySelector('{tag}[{option}="{content_option}"]');
+            if (element) {{
+                if ({str(tag_navigation).lower()} === 'true') {{
                     // Obtener la posición del elemento
                     var rect = element.getBoundingClientRect();
                     var elementLeft = rect.left + rect.width / 2 - window.innerWidth / 2;
@@ -155,22 +195,29 @@ class CodeEditor(QWidget):
                     // Desplazarse a la posición del elemento
                     window.scrollTo({{ left: elementLeft, top: elementTop, behavior: 'smooth' }});
                 }}
-            """
-            self.browser_loaded.page().runJavaScript(script)
-
-        # realizar la accion
-        script = f"""
-            var element = document.querySelector('{tag}[{option}="{content_option}"]');
-            element.style.border = '3px solid red';
-            element.value = '{value}';
-            element.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                element.style.border = '3px solid red';
+                element.value = '{value}';
+                element.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            }}
         """
 
+        def handle_result(result):
+            if result is not None:
+                element_value = result.toString()
+                if self.actions_text_edit:
+                    self.actions_text_edit.append('Has Agregado un contenido!: ', element_value)
+                    self.actions_text_edit.append('')
+            else:
+                # add to display
+                if self.actions_text_edit:
+                    self.actions_text_edit.append('Error: No se a Agregado un contenido')
+                    self.actions_text_edit.append('')
+
         # Agregar que se completo al agregar contenido 
-        if self.actions_text_edit:
-            self.actions_text_edit.append('Has Agregado un contenido!')
-            self.actions_text_edit.append('')
-        self.browser_loaded.page().runJavaScript(script)
+        self.browser_loaded.page().runJavaScript(script, handle_result)
+
+
+
 
     # Es esperar hasta que la pagina termine de cargar
     def load_pege_finished(self):
@@ -271,9 +318,9 @@ class CodeEditor(QWidget):
 
 
 
-            """if current_widget.count() == 1:
+            if current_widget.count() == 1:
                 sizes = sum(current_widget.sizes())
-                current_widget.widget(0).setMinimumHeight(sizes)"""
+                current_widget.widget(0).setMinimumHeight(sizes)
 
             
 
@@ -557,6 +604,26 @@ class CodeEditor(QWidget):
                 self.unsaved_changes = False
                 self.tab_widget.setTabText(current_index, file_name)  # Eliminar el indicador "*"
 
+
+    # *****************************************************
+    # *****************************************************
+    #  Data Base errors 
+    # *****************************************************
+    # *****************************************************
+
+    def insert_error_entry(self, status, title, pasos_reproducir, mensaje_error, resultados_esperados, resultados_obtenidos, error_date):
+        error_date = date.fromisoformat(error_date)
+        error_entry = ErrorEntry(
+            status=status,
+            title=title,
+            pasos_reproducir=pasos_reproducir,
+            mensaje_error=mensaje_error,
+            resultados_esperados=resultados_esperados,
+            resultados_obtenidos=resultados_obtenidos,
+            error_date=error_date
+        )
+        self.session.add(error_entry)
+        self.session.commit()
 
 
 
