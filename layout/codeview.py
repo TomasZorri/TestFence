@@ -105,13 +105,13 @@ class CodeEditor(QWidget):
         self.page_load = True
 
     # Relizar click
-    def click_element(self, tag, option, content_option, tag_navigation=False, time_wait=False):
+    def click_element(self, tag, attribute, contentAttribute, tag_navigation=False, time_wait=False):
         if not self.page_load:
             # Esperar a que se complete la carga de la página antes de continuar con el código
             waitForSignal(self.browser_loaded.loadFinished)
 
         script = f"""
-            var element = document.querySelector('{tag}[{option}="{content_option}"]');
+            var element = document.querySelector('{tag}[{attribute}="{contentAttribute}"]');
             if (element) {{
                 // navigate to element
                 if ({str(tag_navigation).lower()} === 'true') {{
@@ -139,12 +139,19 @@ class CodeEditor(QWidget):
 
         # Obtener resultado
         def handle_result(result):
+            # Obtener la fecha actual
+            fecha_actual = date.today()
+            fecha_actual_formateada = fecha_actual.strftime('%Y-%m-%d')
+
             if result is not None:
                 if result == 'no_functionality':
                     # El elemento existe pero no se hizo clic correctamente
-                    self.insert_error_entry('activo', 'Error de prueba', 'Pasos para reproducir el error',
-                                'Mensaje de error', 'Resultados esperados', 'Resultados obtenidos',
-                                '2023-07-04')
+                    #Steps to reproduce the error: *
+                    steps_to_follow = f"""When executing "click_element('{tag}', '{attribute}', '{contentAttribute}')" it does not perform any action."""
+                    error_message = "This error occurs when there is no action after clicking on an element"
+                    self.insert_error_entry('activo', 'Item functionality error', steps_to_follow,
+                                error_message, 'Resultados esperados', 'Resultados obtenidos',
+                                fecha_actual_formateada)
 
                     if self.actions_text_edit:
                         self.actions_text_edit.append('Error: No se pudo hacer clic en el elemento')
@@ -156,7 +163,7 @@ class CodeEditor(QWidget):
                 # El elemento existe pero no se hizo clic correctamente
                 self.insert_error_entry('activo', 'Error de prueba', 'Pasos para reproducir el error',
                                 'Mensaje de error', 'Resultados esperados', 'Resultados obtenidos',
-                                '2023-07-04')
+                                fecha_actual_formateada)
                 
                 # add to display
                 if self.actions_text_edit:

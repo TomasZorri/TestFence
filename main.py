@@ -9,6 +9,8 @@ from layout.htmlview import MainHtmlView
 from layout.browserview import BrowserView ,BrowserNavegacion
 from layout.navview import NavMenu
 from layout.codeview import CodeEditor
+from layout.dberrorview import DBError
+
 
 # Import data
 from model import *
@@ -34,7 +36,8 @@ class MainWindow(QMainWindow):
         self.browser_view = BrowserView(self.html_view)
         self.code_view = CodeEditor(self.browser_view, self.session)
         self.brower_nav = BrowserNavegacion(self.browser_view, parent=self)
-        self.navmenu_view = NavMenu(self.browser_view, self.code_view, self.close_application)
+        self.dberror_view = DBError(self.session)
+        self.navmenu_view = NavMenu(self.browser_view, self.code_view, self.close_application, self.dberror_view)
 
         
         # Configurar el layout de la ventana principal
@@ -49,9 +52,10 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(self.code_view)
         content_layout.addWidget(browser_widget)
         content_layout.addWidget(self.html_view)
+        content_layout.addWidget(self.dberror_view)
         sizes = content_layout.sizes()
         total_size = sum(sizes)
-        content_layout.setSizes([2, 6, 2])
+        #content_layout.setSizes([2, 6, 2])
         # Minimos
         #content_layout.widget(0).setMinimumWidth(int(total_size * 0.15))
         #content_layout.widget(1).setMinimumWidth(int(total_size * 0.70))

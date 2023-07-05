@@ -5,13 +5,14 @@ from PyQt5.QtCore import Qt
 
 
 class NavMenu(QMainWindow):
-    def __init__(self, browser_view, code_view, close_application):
+    def __init__(self, browser_view, code_view, close_application, dberror_view):
         super(NavMenu, self).__init__()
 
         # Crear instancias
         self.browser_view = browser_view
         self.code_view = code_view
         self.close_application = close_application
+        self.dberror_view = dberror_view
         main_menu = self.menuBar()
         main_menu.setStyleSheet("QMenuBar { margin: 0px; padding: 0px; }")
 
@@ -96,14 +97,22 @@ class NavMenu(QMainWindow):
         extract_tags_action = QAction("Extract Tags", self)
         extract_tags_action.setShortcut(QKeySequence("Ctrl+E"))
         extract_tags_action.triggered.connect(self.browser_view.activate_select_mode)
+
+        view_db_action = QAction("View Data Base", self)
+        view_db_action.triggered.connect(self.dberror_view.view_dberror)
+
         # Configuracion de Boton para Ejecutar y pausar el codigo
         run_code_action = QAction("run code", self)
         run_code_action.setShortcut(QKeySequence("Ctrl+B"))
         run_code_action.triggered.connect(self.code_view.run_code)
+
         stop_code_action = QAction("stop code", self)
         stop_code_action.triggered.connect(self.code_view.pause_execution)
 
+
+
         tools_menu.addAction(extract_tags_action)
+        tools_menu.addAction(view_db_action)
         tools_menu.addSeparator()
         tools_menu.addAction(run_code_action)
         tools_menu.addAction(stop_code_action)
