@@ -1,4 +1,5 @@
-# cache exclusion 
+# cache exclusion
+__pycache__ 
 layout/__pycache__
 
 # DataBase exclusion

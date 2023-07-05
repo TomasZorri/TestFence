@@ -16,4 +16,4 @@ class ErrorEntry(Base):
     mensaje_error = Column(String)
     resultados_esperados = Column(String)
     resultados_obtenidos = Column(String)
-    error_date = Column(Date)
+    error_date = Column(Date) 

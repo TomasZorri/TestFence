@@ -19,7 +19,7 @@ import sys
 sys.path.append('..')
 from model import ErrorEntry
 
-
+ 
 
 
 # Logica de tiempo de espera
