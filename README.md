@@ -31,7 +31,7 @@ python main.py
 
 In this documentation.md file, you will find all the necessary information to effectively use this application.
 
-To access the documentation, simply click on the [Documentation](Documentation) link, which will open the documentation file.
+To access the documentation, simply click on the [Documentation](Documentation.md) link, which will open the documentation file.
 
 By referring to the documentation, you will gain a deeper understanding of the application's features and how to utilize them efficiently.
 
