@@ -19,6 +19,8 @@ import sys
 sys.path.append('..')
 from model import ErrorEntry
 
+# check url
+import requests
  
 
 
@@ -86,6 +88,7 @@ class CodeEditor(QWidget):
 
         # Other initializations
         self.last_opened_folder = QDir.homePath()
+        self.execute_functions = True # Enable the executions of the functionalities
 
 
 
@@ -99,7 +102,6 @@ class CodeEditor(QWidget):
     # Wait for the page to finish loading
     def on_load_finished(self):
         print('The page has finished loading!')
-
         self.page_load = True
 
     # Click on element
@@ -107,74 +109,76 @@ class CodeEditor(QWidget):
         if not self.page_load:
             waitForSignal(self.browser_loaded.loadFinished) # wait until the page finishes loading before continuing
 
-        script = f"""
-            var element = document.querySelector('{tag}[{attribute}="{contentAttribute}"]');
-            if (element) {{
-                // navigate to element
-                if ({str(tag_navigation).lower()} === 'true') {{
-                    // Obtener la posición del elemento
-                    var rect = element.getBoundingClientRect();
-                    var elementLeft = rect.left + rect.width / 2 - window.innerWidth / 2;
-                    var elementTop = rect.top + rect.height / 2 - window.innerHeight / 2;
+        # If the url gives an error, it is not executed
+        if self.execute_functions:
+            script = f"""
+                var element = document.querySelector('{tag}[{attribute}="{contentAttribute}"]');
+                if (element) {{
+                    // navigate to element
+                    if ({str(tag_navigation).lower()} === 'true') {{
+                        // Obtener la posición del elemento
+                        var rect = element.getBoundingClientRect();
+                        var elementLeft = rect.left + rect.width / 2 - window.innerWidth / 2;
+                        var elementTop = rect.top + rect.height / 2 - window.innerHeight / 2;
 
-                    // Desplazarse a la posición del elemento
-                    window.scrollTo({{ left: elementLeft, top: elementTop, behavior: 'smooth' }});
-                }}
+                        // Desplazarse a la posición del elemento
+                        window.scrollTo({{ left: elementLeft, top: elementTop, behavior: 'smooth' }});
+                    }}
 
-                // Logic click element
-                element.style.border = '3px solid red';
-                element.click();
-                if ((element.getAttribute('data-clicked') === 'true' || (element.getAttribute('href') && element.getAttribute('href') !== '') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'button') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'submit') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'checkbox') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'radio') || (element.tagName === 'SELECT') || (element.tagName === 'LABEL'))) {{
-                    element = 'positive';
+                    // Logic click element
+                    element.style.border = '3px solid red';
+                    element.click();
+                    if ((element.getAttribute('data-clicked') === 'true' || (element.getAttribute('href') && element.getAttribute('href') !== '') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'button') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'submit') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'checkbox') || (element.tagName === 'INPUT' && element.getAttribute('type') === 'radio') || (element.tagName === 'SELECT') || (element.tagName === 'LABEL'))) {{
+                        element = 'positive';
+                    }} else {{
+                        element = 'no_functionality';
+                    }}
                 }} else {{
-                    element = 'no_functionality';
+                    element = null;
                 }}
-            }} else {{
-                element = null;
-            }}
-        """
+            """
 
-        # get result
-        def handle_result(result):
-            fecha_actual = date.today()
-            fecha_actual_formateada = fecha_actual.strftime('%Y-%m-%d')
+            # get result
+            def handle_result(result):
+                fecha_actual = date.today()
+                fecha_actual_formateada = fecha_actual.strftime('%Y-%m-%d')
 
-            if result is not None:
-                if result == 'no_functionality':
-                    # The element exists but was not clicked correctly
-                    steps_to_follow = f"""When executing "click_element('{tag}', '{attribute}', '{contentAttribute}')" it does not perform any action."""
-                    error_message = "This error occurs when there is no action after clicking on an element"
-                    self.insert_error_entry('activo', 'Item functionality error', steps_to_follow,
+                if result is not None:
+                    if result == 'no_functionality':
+                        # The element exists but was not clicked correctly
+                        steps_to_follow = f"""When executing "click_element('{tag}', '{attribute}', '{contentAttribute}')" it does not perform any action."""
+                        error_message = "This error occurs when there is no action after clicking on an element"
+                        self.insert_error_entry('activo', 'Item functionality error', steps_to_follow,
+                                error_message, 'Resultados esperados', 'Resultados obtenidos',fecha_actual_formateada)
+
+                        # add to display
+                        if self.actions_text_edit:
+                            self.actions_text_edit.append('Error: The element could not be clicked.')
+                            self.actions_text_edit.append('')
+                    elif result == 'positive' and self.actions_text_edit:
+                        self.actions_text_edit.append('You have clicked!!')
+                        self.actions_text_edit.append('')
+                else:
+                    # The element does not exist
+                    steps_to_follow = f"""When executing "click_element('{tag}', '{attribute}', '{contentAttribute}')" the element was not found."""
+                    error_message = "This error occurs when the item does not exist on the site."
+                    self.insert_error_entry('activo', 'Error searching for said element', steps_to_follow,
                             error_message, 'Resultados esperados', 'Resultados obtenidos',fecha_actual_formateada)
-
+                    
                     # add to display
                     if self.actions_text_edit:
-                        self.actions_text_edit.append('Error: The element could not be clicked.')
+                        self.actions_text_edit.append('Error: Item not found.')
                         self.actions_text_edit.append('')
-                elif result == 'positive' and self.actions_text_edit:
-                    self.actions_text_edit.append('You have clicked!!')
-                    self.actions_text_edit.append('')
-            else:
-                # The element does not exist
-                steps_to_follow = f"""When executing "click_element('{tag}', '{attribute}', '{contentAttribute}')" the element was not found."""
-                error_message = "This error occurs when the item does not exist on the site."
-                self.insert_error_entry('activo', 'Error searching for said element', steps_to_follow,
-                        error_message, 'Resultados esperados', 'Resultados obtenidos',fecha_actual_formateada)
-                
-                # add to display
+
+            # run script
+            self.browser_loaded.page().runJavaScript(script, handle_result)
+
+            # optional if you want to wait
+            if time_wait:
                 if self.actions_text_edit:
-                    self.actions_text_edit.append('Error: Item not found.')
+                    self.actions_text_edit.append('Waiting until the page finishes loading!')
                     self.actions_text_edit.append('')
-
-        # run script
-        self.browser_loaded.page().runJavaScript(script, handle_result)
-
-        # optional if you want to wait
-        if time_wait:
-            if self.actions_text_edit:
-                self.actions_text_edit.append('Waiting until the page finishes loading!')
-                self.actions_text_edit.append('')
-            self.page_load = False
+                self.page_load = False
 
 
 
@@ -184,90 +188,124 @@ class CodeEditor(QWidget):
         if not self.page_load:
             waitForSignal(self.browser_loaded.loadFinished) # wait until the page finishes loading before continuing
 
-        # perform the action
-        script = f"""
-            var element = document.querySelector('{tag}[{option}="{content_option}"]');
-            if (element) {{
-                if ({str(tag_navigation).lower()} === 'true') {{
-                    // Obtener la posición del elemento
-                    var rect = element.getBoundingClientRect();
-                    var elementLeft = rect.left + rect.width / 2 - window.innerWidth / 2;
-                    var elementTop = rect.top + rect.height / 2 - window.innerHeight / 2;
+        # If the url gives an error, it is not executed
+        if self.execute_functions:
+            # perform the action
+            script = f"""
+                var element = document.querySelector('{tag}[{option}="{content_option}"]');
+                if (element) {{
+                    if ({str(tag_navigation).lower()} === 'true') {{
+                        // Obtener la posición del elemento
+                        var rect = element.getBoundingClientRect();
+                        var elementLeft = rect.left + rect.width / 2 - window.innerWidth / 2;
+                        var elementTop = rect.top + rect.height / 2 - window.innerHeight / 2;
 
-                    // Desplazarse a la posición del elemento
-                    window.scrollTo({{ left: elementLeft, top: elementTop, behavior: 'smooth' }});
+                        // Desplazarse a la posición del elemento
+                        window.scrollTo({{ left: elementLeft, top: elementTop, behavior: 'smooth' }});
+                    }}
+                    element.style.border = '3px solid red';
+                    element.value = '{value}';
+                    element.dispatchEvent(new Event('input', {{ bubbles: true }}));
                 }}
-                element.style.border = '3px solid red';
-                element.value = '{value}';
-                element.dispatchEvent(new Event('input', {{ bubbles: true }}));
-            }}
-        """
+            """
 
-        def handle_result(result):
-            if result is not None:
-                element_value = result.toString()
-                if self.actions_text_edit:
-                    self.actions_text_edit.append('You have added a content: ', element_value)
-                    self.actions_text_edit.append('')
-            else:
-                # add to display
-                if self.actions_text_edit:
-                    self.actions_text_edit.append('Error: No content added!')
-                    self.actions_text_edit.append('')
+            def handle_result(result):
+                if result is not None:
+                    element_value = result.toString()
+                    if self.actions_text_edit:
+                        self.actions_text_edit.append('You have added a content: ', element_value)
+                        self.actions_text_edit.append('')
+                else:
+                    # add to display
+                    if self.actions_text_edit:
+                        self.actions_text_edit.append('Error: No content added!')
+                        self.actions_text_edit.append('')
 
-        # execute the action
-        self.browser_loaded.page().runJavaScript(script, handle_result)
+            # execute the action
+            self.browser_loaded.page().runJavaScript(script, handle_result)
 
 
 
 
     # Is to wait until the page finishes loading
     def load_pege_finished(self):
-        if self.actions_text_edit:
-            self.actions_text_edit.append('Waiting until the page finishes loading!')
-            self.actions_text_edit.append('')
-        self.page_load = False
+        # If the url gives an error, it is not executed
+        if self.execute_functions:
+            if self.actions_text_edit:
+                self.actions_text_edit.append('Waiting until the page finishes loading!')
+                self.actions_text_edit.append('')
+            self.page_load = False
+
+
+
 
     # Define url for the page
     def set_url_for_browser(self, url, time_wait=False):
         if not self.page_load:
             waitForSignal(self.browser_loaded.loadFinished) # wait until the page finishes loading before continuing
 
-        if self.actions_text_edit:
-            self.actions_text_edit.append('Destination URL changed!')
-            self.actions_text_edit.append('')
 
-        self.browser_url.start(url)
+        response = self.check_url_status(url)
+        if response == 404:
+            self.execute_functions = False # Exclude features by mistake from the site
 
-        if time_wait:
+            # add to display
             if self.actions_text_edit:
-                self.actions_text_edit.append('Waiting until the page finishes loading!')
+                self.actions_text_edit.append('404 error connecting to url!')
                 self.actions_text_edit.append('')
-            self.page_load = False
+        else:
+            self.execute_functions = True # Enable the executions of the functionalities
+            self.browser_url.start(url)
+
+            # add to display
+            if self.actions_text_edit:
+                self.actions_text_edit.append('Destination URL changed!')
+                self.actions_text_edit.append('')
+
+            # Wait for the page to finish loading
+            if time_wait:
+                if self.actions_text_edit:
+                    self.actions_text_edit.append('Waiting until the page finishes loading!')
+                    self.actions_text_edit.append('')
+                self.page_load = False
+
+    # Check url status
+    def check_url_status(self, url):
+        try:
+            response = requests.head(url)
+            return response.status_code
+        except requests.exceptions.RequestException:
+            return 404  # Connection error or invalid request
+
+
+
+
 
     # Navigate between elements
     def navigation_of_tag_or_object(self, tag, option, content_option):
         if not self.page_load:
             waitForSignal(self.browser_loaded.loadFinished) # wait until the page finishes loading before continuing
 
-        script = f"""
-                var element = document.querySelector('{tag}[{option}="{content_option}"]');
-                if (element) {{
-                    // Obtener la posición del elemento
-                    var rect = element.getBoundingClientRect();
-                    var elementLeft = rect.left + rect.width / 2 - window.innerWidth / 2;
-                    var elementTop = rect.top + rect.height / 2 - window.innerHeight / 2;
+        # If the url gives an error, it is not executed
+        if self.execute_functions:
+            script = f"""
+                    var element = document.querySelector('{tag}[{option}="{content_option}"]');
+                    if (element) {{
+                        // Obtener la posición del elemento
+                        var rect = element.getBoundingClientRect();
+                        var elementLeft = rect.left + rect.width / 2 - window.innerWidth / 2;
+                        var elementTop = rect.top + rect.height / 2 - window.innerHeight / 2;
 
-                    // Desplazarse a la posición del elemento
-                    window.scrollTo({{ left: elementLeft, top: elementTop, behavior: 'smooth' }});
-                }}
-            """
+                        // Desplazarse a la posición del elemento
+                        window.scrollTo({{ left: elementLeft, top: elementTop, behavior: 'smooth' }});
+                    }}
+                """
 
-        if self.actions_text_edit:
-            self.actions_text_edit.append('You have navigated to the intended object!')
-            self.actions_text_edit.append('')
+            if self.actions_text_edit:
+                self.actions_text_edit.append('You have navigated to the intended object!')
+                self.actions_text_edit.append('')
 
-        self.browser_loaded.page().runJavaScript(script)
+            self.browser_loaded.page().runJavaScript(script)
 
 
     # Run Code
@@ -472,6 +510,7 @@ class CodeEditor(QWidget):
                 elif reply == QMessageBox.Discard:
                     self.event_close_tab(index, tab_widget_item)
                 elif reply == QMessageBox.Cancel:
+                    return
             else:
                 self.event_close_tab(index, tab_widget_item) # Emit the QEvent.Close event manually to the tab widget
 
