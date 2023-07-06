@@ -28,6 +28,7 @@ python main.py
 
 
 ### Documentation
+
 In this documentation.md file, you will find all the necessary information to effectively use this application.
 
 To access the documentation, simply click on the [Documentation](Documentation) link, which will open the documentation file.
@@ -38,10 +39,7 @@ Feel free to explore the documentation to make the most out of this application.
 
 
 ### Example Usage
-1. Add the following code to this section:
-
-![Code Section](img/info/section-code.jpg)
-
+1. Add this code in the code editor section
 
 ```python
 # Set a new URL
@@ -99,4 +97,4 @@ git push origin your-branch-name
 
 ## License
 
-TestFence is distributed under the Apache-2.0 License. For more details, please refer to the LICENSE file.
+TestFence is distributed under the Apache-2.0 License. For more details, please refer to the [LICENSE](LICENSE) file.
