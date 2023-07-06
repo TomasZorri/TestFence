@@ -94,7 +94,7 @@ class SearchWidget(QWidget):
         self.search_bar = QLineEdit()
         self.search_bar.returnPressed.connect(self.search)
         search_bar_layout.addWidget(self.search_bar)
-        self.search_button = QPushButton('Buscar')
+        self.search_button = QPushButton('Search')
         self.search_button.clicked.connect(self.search)
         search_bar_layout.addWidget(self.search_button)
         # Texto de busqueda bloque
@@ -142,8 +142,8 @@ class SearchWidget(QWidget):
             return
         
         menu = QMenu()
-        copy_action = menu.addAction("Copiar")
-        edit_action = menu.addAction("Editar")
+        copy_action = menu.addAction("Copy")
+        edit_action = menu.addAction("Edit")
         code_action = menu.addAction("Add Code")
 
         action = menu.exec_(sender_widget.mapToGlobal(position))
@@ -226,16 +226,16 @@ class MainHtmlView(QWidget):
         nav_bar_layout = QHBoxLayout()
         main_layout.addLayout(nav_bar_layout)
 
-        self.search_button = QPushButton('Buscar')
+        self.search_button = QPushButton('Search')
         self.search_button.clicked.connect(self.show_search_block)
         nav_bar_layout.addWidget(self.search_button)
         self.search_block_visible = False
 
-        self.organize_button = QPushButton('Organizar')
+        self.organize_button = QPushButton('Organize')
         self.organize_button.clicked.connect(self.organize_html_tags)
         nav_bar_layout.addWidget(self.organize_button)
 
-        self.selcet_tag_view_button = QPushButton('select items')
+        self.selcet_tag_view_button = QPushButton('Select items')
         self.selcet_tag_view_button.clicked.connect(self.view_select_tag)
         nav_bar_layout.addWidget(self.selcet_tag_view_button)
         self.selecttag_block_visible = False

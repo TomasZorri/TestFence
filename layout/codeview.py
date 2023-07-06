@@ -5,15 +5,15 @@ from PyQt5.QtCore import Qt, QEvent, QDir, QFileInfo, QCoreApplication, pyqtSign
 from PyQt5.QtGui import QTextCursor, QStandardItemModel, QStandardItem
 from PyQt5 import Qsci
 
-# Para errorres
+# for errors
 import traceback
 import re
 
-# Seguridad
+# Security
 from RestrictedPython  import compile_restricted
 from RestrictedPython.Guards import safe_builtins
 
-## database
+# database
 from datetime import date
 import sys
 sys.path.append('..')
@@ -22,10 +22,9 @@ from model import ErrorEntry
  
 
 
-# Logica de tiempo de espera
+# Page load timeout logic
 class WaitObject(QObject):
     finished = pyqtSignal()
-
 def waitForSignal(signal):
     wait_obj = WaitObject()
     signal.connect(wait_obj.finished)
@@ -40,36 +39,35 @@ class CodeEditor(QWidget):
     def __init__(self, browser_view, session,  parent=None):
         super(CodeEditor, self).__init__(parent)
 
-        ## Intance of database
-        self.session = session
 
-        # instancias
+        # Instances
+        self.session = session
         self.browser_url = browser_view
         self.browser_loaded = browser_view.web_view
         self.browser_loaded.loadFinished.connect(self.on_load_finished)
         self.page_load = True
         self.execution_paused = False
 
-        # Widget del QTabWidget
+        # Widget of the QTabWidget
         self.tab_widget = QTabWidget(self)
-        self.tab_widget.installEventFilter(self)  # Instalar el filtro de eventos en el QTabWidget
-        self.tab_widget.setTabsClosable(True)  # Habilitar el cierre de pestañas
-        self.tab_widget.tabCloseRequested.connect(self.close_tab)  # Conectar señal de cierre de pestaña
+        self.tab_widget.installEventFilter(self)  # Install the event filter in the QTabWidget
+        self.tab_widget.setTabsClosable(True)  # Enable closing tabs
+        self.tab_widget.tabCloseRequested.connect(self.close_tab)  # Connect tab close signal
 
-        # Botón de "Archivo" 
-        archivo_button = QPushButton("Archivo", self)
+        # "File" button
+        archivo_button = QPushButton("File", self)
         archivo_button.clicked.connect(self.open_file_dialog)
         self.tab_widget.setCornerWidget(archivo_button, Qt.TopLeftCorner)
 
-        # Botón de "+"
+        # "+" Button
         add_tab_button = QPushButton("+", self)
         add_tab_button.clicked.connect(self.create_new_file)
         self.tab_widget.setCornerWidget(add_tab_button, Qt.TopRightCorner)
 
 
-        # Configuracion de code_editer
-        self.unsaved_changes = False # si se han realizado cambios sin guardar
-        self.create_new_file()  # Agregar la primera pestaña por defecto
+        # code_editer configuration
+        self.unsaved_changes = False # if changes have been made without saving
+        self.create_new_file()  # Add the first default tab
         self.error_text_edit = {}
 
 
@@ -78,7 +76,7 @@ class CodeEditor(QWidget):
         layout.addWidget(self.tab_widget)
         self.setLayout(layout)
 
-        # error and run widget handlers
+        # Error and run widget handlers
         self.actions_text_edit = QTextEdit()
         self.actions_text_edit.hide()
         self.actions_text_edit.setReadOnly(True)
@@ -86,7 +84,7 @@ class CodeEditor(QWidget):
         self.error_text_widget.hide()
         self.error_text_widget.setReadOnly(True)
 
-         # Otras inicializaciones
+        # Other initializations
         self.last_opened_folder = QDir.homePath()
 
 
@@ -94,21 +92,20 @@ class CodeEditor(QWidget):
 
     # *****************************************************
     # *****************************************************
-    # Logica de funcionamiento, busqueda, add content and click element
+    # Functioning logic, search, add content and click element
     # *****************************************************
     # *****************************************************
 
-    # Esperar que la pagina termine de cargar
+    # Wait for the page to finish loading
     def on_load_finished(self):
-        print('Se a termino de cargar la pagina!')
+        print('The page has finished loading!')
 
         self.page_load = True
 
-    # Relizar click
+    # Click on element
     def click_element(self, tag, attribute, contentAttribute, tag_navigation=False, time_wait=False):
         if not self.page_load:
-            # Esperar a que se complete la carga de la página antes de continuar con el código
-            waitForSignal(self.browser_loaded.loadFinished)
+            waitForSignal(self.browser_loaded.loadFinished) # wait until the page finishes loading before continuing
 
         script = f"""
             var element = document.querySelector('{tag}[{attribute}="{contentAttribute}"]');
@@ -137,59 +134,57 @@ class CodeEditor(QWidget):
             }}
         """
 
-        # Obtener resultado
+        # get result
         def handle_result(result):
-            # Obtener la fecha actual
             fecha_actual = date.today()
             fecha_actual_formateada = fecha_actual.strftime('%Y-%m-%d')
 
             if result is not None:
                 if result == 'no_functionality':
-                    # El elemento existe pero no se hizo clic correctamente
-                    #Steps to reproduce the error: *
+                    # The element exists but was not clicked correctly
                     steps_to_follow = f"""When executing "click_element('{tag}', '{attribute}', '{contentAttribute}')" it does not perform any action."""
                     error_message = "This error occurs when there is no action after clicking on an element"
                     self.insert_error_entry('activo', 'Item functionality error', steps_to_follow,
-                                error_message, 'Resultados esperados', 'Resultados obtenidos',
-                                fecha_actual_formateada)
+                            error_message, 'Resultados esperados', 'Resultados obtenidos',fecha_actual_formateada)
 
+                    # add to display
                     if self.actions_text_edit:
-                        self.actions_text_edit.append('Error: No se pudo hacer clic en el elemento')
+                        self.actions_text_edit.append('Error: The element could not be clicked.')
                         self.actions_text_edit.append('')
                 elif result == 'positive' and self.actions_text_edit:
-                    self.actions_text_edit.append('Has hecho un click!: ')
+                    self.actions_text_edit.append('You have clicked!!')
                     self.actions_text_edit.append('')
             else:
-                # El elemento existe pero no se hizo clic correctamente
-                self.insert_error_entry('activo', 'Error de prueba', 'Pasos para reproducir el error',
-                                'Mensaje de error', 'Resultados esperados', 'Resultados obtenidos',
-                                fecha_actual_formateada)
+                # The element does not exist
+                steps_to_follow = f"""When executing "click_element('{tag}', '{attribute}', '{contentAttribute}')" the element was not found."""
+                error_message = "This error occurs when the item does not exist on the site."
+                self.insert_error_entry('activo', 'Error searching for said element', steps_to_follow,
+                        error_message, 'Resultados esperados', 'Resultados obtenidos',fecha_actual_formateada)
                 
                 # add to display
                 if self.actions_text_edit:
-                    self.actions_text_edit.append('Error: No se encontró el elemento')
+                    self.actions_text_edit.append('Error: Item not found.')
                     self.actions_text_edit.append('')
 
-        # Ejecutar script
+        # run script
         self.browser_loaded.page().runJavaScript(script, handle_result)
 
-        # opcional si desea esperar
+        # optional if you want to wait
         if time_wait:
             if self.actions_text_edit:
-                self.actions_text_edit.append('Esperando hasta que la pagina termine de cargar!')
+                self.actions_text_edit.append('Waiting until the page finishes loading!')
                 self.actions_text_edit.append('')
             self.page_load = False
 
 
 
 
-    # Agregar contenido
+    # add content
     def set_content(self, tag, option, content_option, value, tag_navigation=False):
         if not self.page_load:
-            # Esperar a que se complete la carga de la página antes de continuar con el código
-            waitForSignal(self.browser_loaded.loadFinished)
+            waitForSignal(self.browser_loaded.loadFinished) # wait until the page finishes loading before continuing
 
-        # realizar la accion
+        # perform the action
         script = f"""
             var element = document.querySelector('{tag}[{option}="{content_option}"]');
             if (element) {{
@@ -212,50 +207,48 @@ class CodeEditor(QWidget):
             if result is not None:
                 element_value = result.toString()
                 if self.actions_text_edit:
-                    self.actions_text_edit.append('Has Agregado un contenido!: ', element_value)
+                    self.actions_text_edit.append('You have added a content: ', element_value)
                     self.actions_text_edit.append('')
             else:
                 # add to display
                 if self.actions_text_edit:
-                    self.actions_text_edit.append('Error: No se a Agregado un contenido')
+                    self.actions_text_edit.append('Error: No content added!')
                     self.actions_text_edit.append('')
 
-        # Agregar que se completo al agregar contenido 
+        # execute the action
         self.browser_loaded.page().runJavaScript(script, handle_result)
 
 
 
 
-    # Es esperar hasta que la pagina termine de cargar
+    # Is to wait until the page finishes loading
     def load_pege_finished(self):
         if self.actions_text_edit:
-            self.actions_text_edit.append('Esperando hasta que la pagina termine de cargar!')
+            self.actions_text_edit.append('Waiting until the page finishes loading!')
             self.actions_text_edit.append('')
         self.page_load = False
 
-    # Definir url para la pagina
+    # Define url for the page
     def set_url_for_browser(self, url, time_wait=False):
         if not self.page_load:
-            # Esperar a que se complete la carga de la página antes de continuar con el código
-            waitForSignal(self.browser_loaded.loadFinished)
+            waitForSignal(self.browser_loaded.loadFinished) # wait until the page finishes loading before continuing
 
         if self.actions_text_edit:
-            self.actions_text_edit.append('Se cambio la URL del destino!')
+            self.actions_text_edit.append('Destination URL changed!')
             self.actions_text_edit.append('')
 
         self.browser_url.start(url)
 
         if time_wait:
             if self.actions_text_edit:
-                self.actions_text_edit.append('Esperando hasta que la pagina termine de cargar!')
+                self.actions_text_edit.append('Waiting until the page finishes loading!')
                 self.actions_text_edit.append('')
             self.page_load = False
 
-    # Navegar entre objetos
+    # Navigate between elements
     def navigation_of_tag_or_object(self, tag, option, content_option):
         if not self.page_load:
-            # Esperar a que se complete la carga de la página antes de continuar con el código
-            waitForSignal(self.browser_loaded.loadFinished)
+            waitForSignal(self.browser_loaded.loadFinished) # wait until the page finishes loading before continuing
 
         script = f"""
                 var element = document.querySelector('{tag}[{option}="{content_option}"]');
@@ -271,28 +264,27 @@ class CodeEditor(QWidget):
             """
 
         if self.actions_text_edit:
-            self.actions_text_edit.append('Se a navegado al objeto destinado!')
+            self.actions_text_edit.append('You have navigated to the intended object!')
             self.actions_text_edit.append('')
 
         self.browser_loaded.page().runJavaScript(script)
 
 
-    # Ejecutar el codigo 
+    # Run Code
     def run_code(self):
-        # Obtener el código del editor de la pestaña activa
+        # Get the editor code of the active tab
         current_index = self.tab_widget.currentIndex()
         current_widget = self.tab_widget.widget(current_index)
 
         code_widget = current_widget.widget(0)
         code = code_widget.text()
         if not code:
-            print("El código está vacío. No se ejecutará nada.")
             return
         elif code and self.unsaved_changes:
             self.save_file()
         
 
-        # Definir funciones y módulos permitidos
+        # Define allowed functions and modules
         allowed_globals = {
             'click_element': self.click_element,
             'set_content': self.set_content,
@@ -302,15 +294,15 @@ class CodeEditor(QWidget):
         }
 
         try:
-            # Agregar el widget de ejecusion
+            # Add the run widget
             if self.actions_text_edit.isVisible() != True:
+                # Hide the error widget if it exists and add the run widget and show it
                 self.error_text_widget.hide()
                 self.actions_text_edit.show()
                 current_widget.addWidget(self.actions_text_edit)
                 self.error_text_widget.setPlainText("")
 
-
-                # Ajustar Tamaño
+                ## Adjust Size
                 sizes = current_widget.sizes()
                 total_size = sum(sizes)
                 code_editor_size = int(total_size * 0.9)
@@ -322,23 +314,25 @@ class CodeEditor(QWidget):
                 current_widget.widget(0).setMaximumHeight(code_editor_size)
                 current_widget.widget(1).setMinimumHeight(actions_text_edit_size)
                 current_widget.widget(1).setMaximumHeight(int(total_size * 0.30))
+            else:
+                self.error_text_widget.setPlainText("")
 
 
-
+            # If there is no widget it will fit full screen
             if current_widget.count() == 1:
                 sizes = sum(current_widget.sizes())
                 current_widget.widget(0).setMinimumHeight(sizes)
 
             
 
-            # Compilar el código restringido
+            # Compile the restricted code
             code_restricted = compile_restricted(code, '<string>', 'exec')
-            # Ejecutar el código restringido en un entorno de ejecución personalizado
+            # Run the restricted code in a custom runtime environment
             exec(code_restricted, {'__builtins__': safe_builtins, '__name__': '__main__', **allowed_globals, '__import__': lambda x: None})
         except Exception as e:
             error_info = str(e)
 
-            # Configuracion de mensajes
+            # Message configuration
             if isinstance(e, SyntaxError):
                 match = re.search(r"SyntaxError: (.+)", error_info)
                 if match:
@@ -356,48 +350,46 @@ class CodeEditor(QWidget):
                 else:
                     error_message = f"{error_info}."
 
-            # Verificar si el widget de texto de error ya existe para la pestaña actual
+            # Check if the error text widget already exists for the current tab
             if current_index in self.error_text_edit and self.error_text_widget.isVisible() == True:
                 error_text_edit = self.error_text_edit[current_index]
                 error_text_edit.setPlainText(error_message)     
             elif self.error_text_widget.isVisible() != True:
-                ## Widget de texto de error y agregarlo al layout de la pestaña actual
+                ## Error text widget and add it to the current tab layout
                 self.actions_text_edit.hide()
                 self.error_text_widget.show()
                 current_widget.addWidget(self.error_text_widget)
                 self.error_text_widget.setPlainText(error_message)
 
-                ## Calcular su tamaño
+                ## Calculate your size
                 sizes = current_widget.sizes()
                 total_size = sum(sizes)
                 code_editor_size = int(total_size * 0.9)
                 error_text_edit_size = total_size - code_editor_size
-                # Establecer los nuevos tamaños en el QSplitter
+                # Set the new sizes in the QSplitter
                 sizes[0] = code_editor_size
                 sizes[1] = error_text_edit_size
                 current_widget.setSizes(sizes)
-                # Establecer los mínimos y máximos de tamaño para los widgets
                 current_widget.widget(0).setMinimumHeight(int(total_size * 0.70))
                 current_widget.widget(0).setMaximumHeight(code_editor_size)
                 current_widget.widget(1).setMinimumHeight(error_text_edit_size)
                 current_widget.widget(1).setMaximumHeight(int(total_size * 0.30))
                 
-
+                ## add the error message to the tab that has it
                 self.error_text_edit[current_index] = self.error_text_widget
 
             self.tab_widget.setCurrentIndex(current_index)
             
 
-    # Pausar el codigo
+    # Pause the code
     def pause_execution(self):
         self.execution_paused = True
-        print('Ejecución pausada')
 
 
 
     # ******************************************
     # ******************************************
-    # Acciones de editor 
+    # Code editor actions
     # ******************************************
     # ******************************************
 
@@ -437,42 +429,42 @@ class CodeEditor(QWidget):
     # *****************************************************
     # *****************************************************
 
-    # Crear nuevo pestaña de codigo
+    # Create new code tab
     def create_new_file(self):
         self.code_editor = Qsci.QsciScintilla(self)
         self.code_editor.clear()
         self.code_editor.textChanged.connect(self.handle_text_changed)
 
 
-        # Configurar opciones de resaltado de sintaxis
+        # Set syntax highlighting options
         lexer = Qsci.QsciLexerPython()
         lexer.setDefaultFont(self.code_editor.font())
         self.code_editor.setLexer(lexer)
 
-        # Configurar la numeración de líneas
+        # Set line numbering
         self.code_editor.setMarginType(0, Qsci.QsciScintilla.NumberMargin)
         self.code_editor.setMarginWidth(0, "000")
         self.code_editor.SendScintilla(self.code_editor.SCI_SETHSCROLLBAR, 0)
 
-        # Configuracion del widget de la pestaña
+        # Configuration of the tab widget
         splitter = QSplitter(Qt.Vertical)
         splitter.addWidget(self.code_editor)
-        self.tab_widget.addTab(splitter, "Nuevo archivo")
+        self.tab_widget.addTab(splitter, "New File")
 
-        # Obtener el índice de la pestaña recién creada
+        # Get the index of the newly created tab
         new_tab_index = self.tab_widget.count() - 1
         self.tab_widget.setCurrentIndex(new_tab_index)
 
 
 
 
-    # Cerrar pestaña de codigo
+    # Close code tab
     def close_tab(self, index):
         tab_widget_item = self.tab_widget.widget(index)
         if tab_widget_item is not None:
             if self.unsaved_changes:
-                # Mostrar un cuadro de diálogo de confirmación
-                reply = QMessageBox.question(self, "Cambios no guardados", "El archivo ha sido modificado. ¿Desea guardar los cambios?",
+                # Show a confirmation dialog
+                reply = QMessageBox.question(self, "Changes not saved", "The file has been modified. Do you wish to save changes?",
                                              QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
                 if reply == QMessageBox.Save:
                     self.save_file()
@@ -480,21 +472,19 @@ class CodeEditor(QWidget):
                 elif reply == QMessageBox.Discard:
                     self.event_close_tab(index, tab_widget_item)
                 elif reply == QMessageBox.Cancel:
-                    return  # Cancelar el cierre de la pestaña
             else:
-                # Emitir el evento QEvent.Close manualmente al widget de la pestaña
-                self.event_close_tab(index, tab_widget_item)
+                self.event_close_tab(index, tab_widget_item) # Emit the QEvent.Close event manually to the tab widget
 
-        # Verificar si la pestaña actual se cerró
+        # Check if the current tab was closed
         if index != self.tab_widget.currentIndex():
             updated_index = self.tab_widget.currentIndex()
         else:
             updated_index = index - 1 if index > 0 else 0
 
-        if self.tab_widget.count() == 0:  # Si no hay más pestañas abiertas
+        if self.tab_widget.count() == 0:  # If there are no more tabs open
             self.create_new_file()
 
-        # Establecer el índice actualizado
+        # set the updated index
         self.tab_widget.setCurrentIndex(updated_index)
 
     def close_all_tabs(self):
@@ -503,29 +493,29 @@ class CodeEditor(QWidget):
             self.close_tab(0)
 
     def event_close_tab(self, index, tab_widget_item):
-        # Emitir el evento QEvent.Close manualmente al widget de la pestaña
+        # Emit the QEvent.Close event manually to the tab widget
         close_event = QEvent(QEvent.Close)
         QCoreApplication.postEvent(tab_widget_item, close_event)
 
-        # Eliminar el widget de code_edit
+        # Remove the widget from code_edit
         current_widget = self.tab_widget.widget(index)
         code_widget = current_widget.widget(0)
         code_widget.deleteLater()
-        # Eliminamos el widget de error_text_edit
+        # Remove the error_text_edit widget
         if index in self.error_text_edit:
             error_text_edit = self.error_text_edit[index]
             error_text_edit.deleteLater()
             del self.error_text_edit[index]
 
-        # Eliminamos la pestaña
+        # remove the tab
         self.tab_widget.removeTab(index) 
 
 
 
-    # Widget de open_file
+    # open_file widget
     def open_file_dialog(self):
         file_dialog = QFileDialog()
-        file_dialog.setNameFilter("Archivos Python (*.py)")
+        file_dialog.setNameFilter("Python Files (*.py)")
         file_dialog.setFileMode(QFileDialog.ExistingFile)
         file_dialog.setDirectory(QDir.homePath())
         file_dialog.setDirectory(self.last_opened_folder)
@@ -537,34 +527,34 @@ class CodeEditor(QWidget):
 
     def open_file(self, file_path):
         self.last_opened_folder = QFileInfo(file_path).absoluteDir().absolutePath()
-        # Verificar si el archivo ya está abierto en una pestaña
+        # Check if the file is already open in a tab
         for index in range(self.tab_widget.count()):
             tab_widget_item = self.tab_widget.widget(index)
             if tab_widget_item.property("file_path") == file_path:
-                # Seleccionar la pestaña existente
+                # Select the existing tab
                 self.tab_widget.setCurrentIndex(index)
                 return
                 
-        # Extraer el nombre del archivo de la ruta completa
+        # Extract the file name from the full path
         file_name = QFileInfo(file_path).fileName()
 
-        # Widget del editor de código para la nueva pestaña
-        # Llamar al método create_new_file para crear una nueva pestaña
+        # Code editor widget for new tab
+        # Call the create_new_file method to create a new tab
         self.create_new_file()
 
-        # Obtener el código del archivo y establecerlo en el editor de código de la nueva pestaña
+        # Get the code from the file and set it in the code editor of the new tab
         with open(file_path, 'r') as file:
             self.code_editor.setText(file.read())
 
-        # Establecer el título de la nueva pestaña como el nombre del archivo
+        # Set the title of the new tab as the file name
         new_tab_index = self.tab_widget.count() - 1
         self.tab_widget.setTabText(new_tab_index, file_name)
 
-        # Posicionar y hacer visible la pestaña recién agregada
+        # Position and make visible the newly added tab
         self.tab_widget.setCurrentIndex(new_tab_index)
         self.tab_widget.setCurrentWidget(self.code_editor)
 
-        # Establecer la propiedad "file_path" en el widget de la pestaña
+        # Set the "file_path" property on the tab widget
         current_index = self.tab_widget.currentIndex()
         current_widget = self.tab_widget.widget(current_index)
 
@@ -573,27 +563,26 @@ class CodeEditor(QWidget):
         
 
 
-    # Guardar codigo
+    # save code
     def save_file(self):
         current_index = self.tab_widget.currentIndex()
         if current_index != -1:
             current_widget = self.tab_widget.widget(current_index)
             code_widget = current_widget.widget(0)
 
-            # Verificar si el archivo asociado a la pestaña actual
+            # Check if the file associated with the current tab
             file_path = current_widget.property("file_path")
             file_name = QFileInfo(file_path).fileName()
             if file_path:
                 with open(file_path, 'w') as file:
                     file.write(code_widget.text())
                 self.unsaved_changes = False
-                self.tab_widget.setTabText(current_index, file_name)  # Eliminar el indicador "*"
+                self.tab_widget.setTabText(current_index, file_name)  # Remove the "*" flag
             else:
-                # Si el archivo no existe, llamar al método save_file_as
-                self.save_file_as()
+                self.save_file_as() # If the file does not exist, call the save_file_as method
         
         if self.unsaved_changes:
-            # Volver a conectar la señal textChanged para seguir rastreando los cambios sin guardar
+            # Reconnect the textChanged signal to continue tracking changes without saving
             self.code_editor.textChanged.connect(self.handle_text_changed)
 
 
@@ -602,14 +591,14 @@ class CodeEditor(QWidget):
         if current_index != -1:
             current_widget = self.tab_widget.widget(current_index)
             code_widget = current_widget.widget(0)
-            file_path, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", QDir.homePath(), "Archivos Python (*.py)")
+            file_path, _ = QFileDialog.getSaveFileName(self, "Save File", QDir.homePath(), "Python Files (*.py)")
             file_name = QFileInfo(file_path).fileName()
             if file_path:
                 with open(file_path, 'w') as file:
                     file.write(code_widget.text())
-                current_widget.setProperty("file_path", file_path)  # Actualizar la propiedad "file_path"
+                current_widget.setProperty("file_path", file_path)  # Update the "file_path" property
                 self.unsaved_changes = False
-                self.tab_widget.setTabText(current_index, file_name)  # Eliminar el indicador "*"
+                self.tab_widget.setTabText(current_index, file_name)  # Remove the "*" flag
 
 
     # *****************************************************
@@ -636,11 +625,11 @@ class CodeEditor(QWidget):
 
     # *****************************************************
     # *****************************************************
-    # Eventos 
+    # Events 
     # *****************************************************
     # *****************************************************
 
-    # En save verirfica si hay cambios ese aparece el evento de que tiene que guardar
+    # In save it checks if there are changes that the event that has to save appears
     def handle_text_changed(self):
         current_index = self.tab_widget.currentIndex()
         if current_index != -1:
@@ -648,16 +637,16 @@ class CodeEditor(QWidget):
             current_widget.setProperty("modified", True)
             self.unsaved_changes = True
 
-            # Actualizar el título de la pestaña para reflejar los cambios sin guardar
+            # Update the tab title to reflect the changes without saving
             file_name = self.tab_widget.tabText(current_index)
             if "*" not in file_name:
                 self.tab_widget.setTabText(current_index, file_name + " *")
 
-    # Eventos del teclado
+    # keyboard events
     def eventFilter(self, obj, event):
         if obj is self.tab_widget and event.type() == QEvent.MouseButtonDblClick:
             if event.button() == Qt.LeftButton:
-                # Verificar si hay un QLineEdit activo y desactivar su enfoque
+                # Check if there is an active QLineEdit and deactivate its focus
                 for index in range(self.tab_widget.count()):
                     line_edit = self.tab_widget.tabBar().tabButton(index, QTabBar.LeftSide)
                     if line_edit and line_edit.hasFocus():
@@ -672,49 +661,48 @@ class CodeEditor(QWidget):
                 tab_index = self.tab_widget.currentIndex()
                 if tab_index != -1:
                     previous_text = self.tab_widget.tabText(tab_index)
-                    # Crear un QLineEdit para editar el nombre de la pestaña
+                    # Create a QLineEdit to edit the tab name
                     line_edit = QLineEdit(self.tab_widget.tabText(tab_index))
-                    # Obtener el nuevo nombre del QLineEdit
+                    # Get the new name of the QLineEdit
                     new_text = line_edit.text()
                     line_edit.selectAll()
                     line_edit.editingFinished.connect(lambda: self.update_tab_text(tab_index, line_edit.text()))
                     self.tab_widget.tabBar().setTabButton(tab_index, QTabBar.LeftSide, line_edit)
                     line_edit.setFocus()
 
-                    # Deshabilitar el texto de la pestaña mientras se edita
+                    # Disable tab text while editing
                     self.tab_widget.setTabText(tab_index, "")
 
                     def finish_editing():
-                        # Obtener el nuevo nombre del QLineEdit
+                        # Get the new name of the QLineEdit
                         new_text = line_edit.text()
 
-                        # Si el nuevo texto es una cadena vacía, se restaura el contenido anterior
+                        # If the new text is an empty string, restore the old content
                         if new_text == "":
                             new_text = previous_text
 
-                        # Actualizar el texto de la pestaña si ha habido cambios
+                        # Update the tab text if there have been changes
                         if new_text != self.tab_widget.tabText(tab_index):
                             self.tab_widget.setTabText(tab_index, new_text)
 
-                        # Remover el QLineEdit si aún existe
+                        # Remove the QLineEdit if it still exists
                         if line_edit is not None:
                             self.tab_widget.tabBar().setTabButton(tab_index, QTabBar.LeftSide, None)
 
                     line_edit.editingFinished.connect(finish_editing)
 
                     def focus_out_event(event):
-                        # Al perder el foco, se finaliza la edición sin cambios
-                        finish_editing()
+                        finish_editing() # Losing focus ends editing without changes
 
                     line_edit.focusOutEvent = focus_out_event
 
                     return True
         elif isinstance(obj, QTabWidget) and event.type() == QEvent.Close:
-            # Se está cerrando una pestaña, finalizar la edición del QLineEdit si está activo
+            # Closing a tab, finish editing the QLineEdit if it is active
             line_edit = self.tab_widget.tabBar().tabButton(self.tab_widget.currentIndex(), QTabBar.LeftSide)
             if isinstance(line_edit, QLineEdit):
                 if line_edit is not None:
-                    line_edit.editingFinished.emit()  # Emitir la señal de finalización de edición
+                    line_edit.editingFinished.emit()  # Emit the edit completion signal
 
     
 

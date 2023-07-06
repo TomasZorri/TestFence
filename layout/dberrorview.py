@@ -13,35 +13,35 @@ class DBError(QWidget):
         super(DBError, self).__init__(parent)
 
         self.session = session
-        # Crear el widget principal
+        # Create the main widget
         self.widget = QWidget(self)
         layout = QVBoxLayout(self.widget)
 
-        # Agregar el título y los botones
+        # Add the title and buttons
         title_layout = QHBoxLayout()
         title_label = QLabel("Error Details")
         title_layout.addWidget(title_label)
-        # Botón para ocultar el widget
-        hide_button = QPushButton("X")
-        hide_button.clicked.connect(self.hide_widget)
-        title_layout.addWidget(hide_button)
-        # Botón para recargar los datos
+        # Button to reload the data
         reload_button = QPushButton("Reload")
         reload_button.clicked.connect(self.reload_data)
         title_layout.addWidget(reload_button)
+        # Button to hide the widget
+        hide_button = QPushButton("X")
+        hide_button.clicked.connect(self.hide_widget)
+        title_layout.addWidget(hide_button)
         layout.addLayout(title_layout)
 
 
-        # Agregar la tabla
+        # add the table
         self.table_widget = QTableWidget(self)
         self.table_widget.setColumnCount(8)
         self.table_widget.setHorizontalHeaderLabels(['ID', 'Status', 'Title', 'Pasos', 'Mensaje', 'Resultados Esperados', 'Resultados Obtenidos', 'Fecha'])
         layout.addWidget(self.table_widget)
-        # mostrar los datos 
+        # display the data 
         self.reload_data()
         
 
-        # Agregar el widget principal al diseño del widget
+        # Add the main widget to the widget layout
         self.setLayout(layout)
         self.hide()
 
@@ -53,14 +53,14 @@ class DBError(QWidget):
         self.hide()
 
     def reload_data(self):
-        # Limpiar contenido de la tabla
+        # Clear table contents
         self.table_widget.clearContents()
         self.table_widget.setRowCount(0)
         
-        # Obtener los registros de la tabla ErrorEntry
+        # Get the records from the ErrorEntry table
         error_entries = self.session.query(ErrorEntry).all()
 
-        # Agregar los registros a la tabla
+        # Add the records to the table
         for row, entry in enumerate(error_entries):
             self.table_widget.insertRow(row)
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(entry.id)))
@@ -72,12 +72,10 @@ class DBError(QWidget):
             self.table_widget.setItem(row, 6, QTableWidgetItem(entry.resultados_obtenidos))
             self.table_widget.setItem(row, 7, QTableWidgetItem(str(entry.error_date)))
 
-    # Eventos de teclas repidas
+    # hotkey events
     def keyPressEvent(self, event):
-        # Evento para ocultar la vista de html
+        # Event to hide the DBEerror view
         if event.key() == Qt.Key_Escape and self.isVisible():
-            #self.search_button.setFocus()
-            #self.setFocusPolicy(Qt.NoFocus)
             self.hide()
         else:
             super().keyPressEvent(event)

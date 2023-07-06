@@ -21,7 +21,7 @@ class BrowserNavegacion(QWidget):
         self.url_bar = QLineEdit(self)
         self.url_bar.returnPressed.connect(self.load_url)
 
-        self.load_button = QPushButton('Cargar', self)
+        self.load_button = QPushButton('Load', self)
         self.load_button.clicked.connect(self.load_url)
 
         # Crea un botón de retroceso

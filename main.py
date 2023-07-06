@@ -40,14 +40,14 @@ class MainWindow(QMainWindow):
         self.navmenu_view = NavMenu(self.browser_view, self.code_view, self.close_application, self.dberror_view)
 
         
-        # Configurar el layout de la ventana principal
+        # Set the layout of the main window
         browser_widget = QWidget()
         browser_layout = QVBoxLayout()
         browser_layout.addWidget(self.brower_nav, 5)
         browser_layout.addWidget(self.browser_view, 95)
         browser_widget.setLayout(browser_layout)
 
-        # layout de contenido
+        # content layout
         content_layout = QSplitter(Qt.Horizontal)
         content_layout.addWidget(self.code_view)
         content_layout.addWidget(browser_widget)
@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         #content_layout.widget(2).setMaximumWidth(int(total_size * 0.25))
 
 
-        # Layout final
+        # final layout
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.navmenu_view, 3)
         main_layout.addWidget(content_layout, 97)
@@ -78,13 +78,12 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         self.showMaximized()
 
-        # Configuracion del titulo 
+        # Configuration of the title
         self.setWindowTitle("TestFence")
         self.setWindowIcon(QIcon("img/main.png"))
 
     def close_application(self):
-        # Cerrar la aplicación
-        self.close()
+        self.close() # close the application
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
