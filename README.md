@@ -27,26 +27,14 @@ python main.py
 ```
 
 
-### Usage
+### Documentation
+In this documentation.md file, you will find all the necessary information to effectively use this application.
 
-1. Use the following functions for testing:
+To access the documentation, simply click on the [Documentation](Documentation) link, which will open the documentation file.
 
-```python
-# Set a new URL
-set_url('URL', time_wait=True)
+By referring to the documentation, you will gain a deeper understanding of the application's features and how to utilize them efficiently.
 
-# Configure content
-set_content('TAG', 'Attribute', 'contentAttribute', 'text', tag_navigation=True)
-
-# Click on an element
-click_element('TAG', 'Attribute', 'contentAttribute', time_wait=True, tag_navigation=True)
-
-# Wait for the page to fully load
-wait_page()
-```
-
-* The "time_wait=True" parameter in "click_element()" and "set_url()" functions is used to wait for the page to finish loading before performing the action. It functions similarly to the "wait_page()" function.
-* The "tag_navigation=True" parameter indicates that the element will be searched first, centered on the screen, highlighted, and then the specified action will be performed. This parameter is only used in the "set_content()" and "click_element()" functions.
+Feel free to explore the documentation to make the most out of this application.
 
 
 ### Example Usage
