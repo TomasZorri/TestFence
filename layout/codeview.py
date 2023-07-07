@@ -145,11 +145,13 @@ class CodeEditor(QWidget):
 
                 if result is not None:
                     if result == 'no_functionality':
-                        # The element exists but was not clicked correctly
+                        # Report error and save to database:: The element exists but was not clicked correctly
                         steps_to_follow = f"""When executing "click_element('{tag}', '{attribute}', '{contentAttribute}')" it does not perform any action."""
                         error_message = "This error occurs when there is no action after clicking on an element"
+                        expected_results = f"""The goal is to click on this "click_element('{tag}', '{attribute}', '{contentAttribute}')" element."""
+                        results_obtained = "What you get is that the element exists but there is no action."
                         self.insert_error_entry('activo', 'Item functionality error', steps_to_follow,
-                                error_message, 'Resultados esperados', 'Resultados obtenidos',fecha_actual_formateada)
+                                error_message, expected_results, results_obtained, fecha_actual_formateada)
 
                         # add to display
                         if self.actions_text_edit:
@@ -159,12 +161,15 @@ class CodeEditor(QWidget):
                         self.actions_text_edit.append('You have clicked!!')
                         self.actions_text_edit.append('')
                 else:
-                    # The element does not exist
+                    # Report error and save to database:: The element does not exist
                     steps_to_follow = f"""When executing "click_element('{tag}', '{attribute}', '{contentAttribute}')" the element was not found."""
                     error_message = "This error occurs when the item does not exist on the site."
+                    expected_results = f"""The goal is to click on this "click_element('{tag}', '{attribute}', '{contentAttribute}')" element."""
+                    results_obtained = "What you get is that the element does not exist, therefore it will not do any action."
                     self.insert_error_entry('activo', 'Error searching for said element', steps_to_follow,
-                            error_message, 'Resultados esperados', 'Resultados obtenidos',fecha_actual_formateada)
-                    
+                            error_message, expected_results, results_obtained, fecha_actual_formateada)
+   
+
                     # add to display
                     if self.actions_text_edit:
                         self.actions_text_edit.append('Error: Item not found.')
@@ -211,9 +216,8 @@ class CodeEditor(QWidget):
 
             def handle_result(result):
                 if result is not None:
-                    element_value = result.toString()
                     if self.actions_text_edit:
-                        self.actions_text_edit.append('You have added a content: ', element_value)
+                        self.actions_text_edit.append('You have added a content: ')
                         self.actions_text_edit.append('')
                 else:
                     # add to display
@@ -244,14 +248,23 @@ class CodeEditor(QWidget):
         if not self.page_load:
             waitForSignal(self.browser_loaded.loadFinished) # wait until the page finishes loading before continuing
 
-
         response = self.check_url_status(url)
         if response == 404:
+            fecha_actual = date.today()
+            fecha_actual_formateada = fecha_actual.strftime('%Y-%m-%d')
             self.execute_functions = False # Exclude features by mistake from the site
+
+            # Report error and save to database
+            steps_to_follow = f"""When entering this url 'set_url('{url}')' it seems not to be found, that's why it gives a 404 error"""
+            error_message = "This error occurs when the item does not exist on the site."
+            expected_results = f"The expected results, is to access this url '{url}'."
+            results_obtained = f"404 error when accessing said url '{url}'."
+            self.insert_error_entry('activo', '404 error in a url', steps_to_follow,
+                    error_message, expected_results, results_obtained, fecha_actual_formateada)
 
             # add to display
             if self.actions_text_edit:
-                self.actions_text_edit.append('404 error connecting to url!')
+                self.actions_text_edit.append(f'404 error connecting to url "{url}"!')
                 self.actions_text_edit.append('')
         else:
             self.execute_functions = True # Enable the executions of the functionalities
@@ -332,6 +345,7 @@ class CodeEditor(QWidget):
         }
 
         try:
+            self.execute_functions = True
             # Add the run widget
             if self.actions_text_edit.isVisible() != True:
                 # Hide the error widget if it exists and add the run widget and show it
@@ -360,6 +374,7 @@ class CodeEditor(QWidget):
             if current_widget.count() == 1:
                 sizes = sum(current_widget.sizes())
                 current_widget.widget(0).setMinimumHeight(sizes)
+
 
             
 
