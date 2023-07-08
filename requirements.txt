@@ -3,3 +3,4 @@ PyQtWebEngine==5.15.6
 bs4==0.0.1
 RestrictedPython==6.0
 SQLAlchemy==2.0.18
+reportlab==4.0.4

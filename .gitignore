@@ -4,3 +4,6 @@ layout/__pycache__
 
 # DataBase exclusion
 database.db
+
+# Ignore the content inside the folder of folders
+reportsInPDF/*
