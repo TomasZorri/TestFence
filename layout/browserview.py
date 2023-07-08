@@ -1,4 +1,3 @@
-import sys
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QUrl, QPoint, QDateTime
 from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -8,6 +7,13 @@ from PyQt5.QtWebEngineCore import QWebEngineHttpRequest
 from PyQt5.QtNetwork import QNetworkCookie
 
 import requests
+
+## Import img
+import sys
+sys.path.append('..')
+back_img = 'img/icon/back.png'
+forward_img = 'img/icon/forward.png'
+refresh_img = 'img/icon/forward.png'
 
 class BrowserNavegacion(QWidget):
     """docstring for NavView"""
@@ -26,17 +32,17 @@ class BrowserNavegacion(QWidget):
 
         # Crea un botón de retroceso
         self.back_button = QPushButton(self)
-        self.back_button.setIcon(QIcon("../../img/icon/back.png"))
+        self.back_button.setIcon(QIcon(back_img))
         self.back_button.clicked.connect(self.browser_view.web_view.back)
 
         # Crea un botón de avance
         self.forward_button = QPushButton(self)
-        self.forward_button.setIcon(QIcon("../../img/icon/forward.png"))  
+        self.forward_button.setIcon(QIcon(forward_img))  
         self.forward_button.clicked.connect(self.browser_view.web_view.forward)
 
         # Crea un botón de recarga
         self.reload_button = QPushButton(self)
-        self.reload_button.setIcon(QIcon("../../img/icon/refresh.png"))
+        self.reload_button.setIcon(QIcon(refresh_img))
         self.reload_button.clicked.connect(self.browser_view.web_view.reload)
 
 
@@ -189,9 +195,9 @@ class BrowserView(QWidget):
     def show_context_menu(self, position):
         menu = QMenu()
         # Configuracion de Page
-        back_page_action = menu.addAction(QIcon("../../img/icon/back.png"), "Back Page")
-        forward_page_action = menu.addAction(QIcon("../../img/icon/forward.png"), "Forward Page")
-        reload_page_action = menu.addAction(QIcon("../../img/icon/refresh.png"), "Reload page")
+        back_page_action = menu.addAction(QIcon(back_img), "Back Page")
+        forward_page_action = menu.addAction(QIcon(forward_img), "Forward Page")
+        reload_page_action = menu.addAction(QIcon(refresh_img), "Reload page")
         # Agrega separador
         separator_action = menu.addSeparator()
         # View Code 
